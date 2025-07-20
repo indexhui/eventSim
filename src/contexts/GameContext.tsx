@@ -608,11 +608,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const checkRestRequired = (stats: PlayerStats) => {
-    return checkRestRequired(stats);
+    return stats.心情 <= 0 || stats.體力 <= 0;
   };
 
   const checkMoneyRequired = (stats: PlayerStats, requiredAmount: number = 0) => {
-    return checkMoneyRequired(stats, requiredAmount);
+    return stats.儲蓄 >= requiredAmount;
   };
 
   const getAvailableOptions = (event: ExtendedEvent) => {
