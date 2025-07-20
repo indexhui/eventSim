@@ -1,11 +1,13 @@
-import { ExtendedEvent } from "./constants";
-import { dailyLifeEvents } from "./daily-life";
-import { workEvents } from "./work";
-import { socialEvents } from "./social";
-import { shoppingEvents } from "./shopping";
-import { healthEvents } from "./health";
-import { commuteEvents } from "./commute";
-import { PlayerStats } from "../../types/game";
+import { ExtendedEvent } from './constants';
+import { dailyLifeEvents } from './daily-life';
+import { workEvents } from './work';
+import { socialEvents } from './social';
+import { shoppingEvents } from './shopping';
+import { healthEvents } from './health';
+import { commuteEvents } from './commute';
+import { allAnimalEvents, animalThreatEvents } from './animal-events';
+import { PlayerStats, AnimalCollectionState } from '../../types/game';
+import { calculateAnimalAffinity } from '../animals';
 
 // 所有事件集合
 export const allEvents: ExtendedEvent[] = [
@@ -15,6 +17,7 @@ export const allEvents: ExtendedEvent[] = [
   ...shoppingEvents,
   ...healthEvents,
   ...commuteEvents,
+  ...allAnimalEvents,
 ];
 
 // 獲取所有事件（用於事件列表頁面）
@@ -26,7 +29,7 @@ export function getAllEvents(): ExtendedEvent[] {
 function checkEventTrigger(
   event: ExtendedEvent,
   playerStats: PlayerStats,
-  gameProgress: number
+  gameProgress: number,
 ): boolean {
   if (!event.triggers) return true;
 
@@ -39,19 +42,14 @@ function checkEventTrigger(
   // 檢查屬性要求
   if (triggers.requiredStats) {
     for (const [stat, value] of Object.entries(triggers.requiredStats)) {
-      if (value !== undefined && playerStats[stat as keyof PlayerStats] < value)
-        return false;
+      if (value !== undefined && playerStats[stat as keyof PlayerStats] < value) return false;
     }
   }
 
   // 檢查排除條件
   if (triggers.excludedStats) {
     for (const [stat, value] of Object.entries(triggers.excludedStats)) {
-      if (
-        value !== undefined &&
-        playerStats[stat as keyof PlayerStats] >= value
-      )
-        return false;
+      if (value !== undefined && playerStats[stat as keyof PlayerStats] >= value) return false;
     }
   }
 
@@ -60,8 +58,8 @@ function checkEventTrigger(
 
 // 檢查選項條件
 function checkOptionConditions(
-  option: ExtendedEvent["options"][string],
-  playerStats: PlayerStats
+  option: ExtendedEvent['options'][string],
+  playerStats: PlayerStats,
 ): boolean {
   if (!option.conditions) return true;
 
@@ -69,19 +67,19 @@ function checkOptionConditions(
     const currentValue = playerStats[condition.stat as keyof PlayerStats];
 
     switch (condition.operator) {
-      case "gte":
+      case 'gte':
         if (currentValue < condition.value) return false;
         break;
-      case "lte":
+      case 'lte':
         if (currentValue > condition.value) return false;
         break;
-      case "eq":
+      case 'eq':
         if (currentValue !== condition.value) return false;
         break;
-      case "gt":
+      case 'gt':
         if (currentValue <= condition.value) return false;
         break;
-      case "lt":
+      case 'lt':
         if (currentValue >= condition.value) return false;
         break;
     }
@@ -93,7 +91,7 @@ function checkOptionConditions(
 // 獲取可用的事件
 export function getAvailableEvents(
   playerStats: PlayerStats,
-  gameProgress: number
+  gameProgress: number,
 ): ExtendedEvent[] {
   return allEvents.filter((event) => {
     // 檢查觸發條件
@@ -101,7 +99,7 @@ export function getAvailableEvents(
 
     // 檢查是否有可用選項
     const hasValidOptions = Object.values(event.options).some((option) =>
-      checkOptionConditions(option, playerStats)
+      checkOptionConditions(option, playerStats),
     );
 
     return hasValidOptions;
@@ -120,15 +118,13 @@ export function getEventsByDifficulty(difficulty: string): ExtendedEvent[] {
 
 // 根據標籤搜尋事件
 export function searchEventsByTags(tags: string[]): ExtendedEvent[] {
-  return allEvents.filter(
-    (event) => event.tags && tags.some((tag) => event.tags!.includes(tag))
-  );
+  return allEvents.filter((event) => event.tags && tags.some((tag) => event.tags!.includes(tag)));
 }
 
 // 隨機選擇事件
 export function getRandomEvent(
   playerStats: PlayerStats,
-  gameProgress: number
+  gameProgress: number,
 ): ExtendedEvent | null {
   const availableEvents = getAvailableEvents(playerStats, gameProgress);
 
@@ -145,11 +141,8 @@ export function getEventByProgress(gameProgress: number): ExtendedEvent | null {
 }
 
 // 過濾有條件的選項
-export function getAvailableOptions(
-  event: ExtendedEvent,
-  playerStats: PlayerStats
-) {
-  const availableOptions: Record<string, ExtendedEvent["options"][string]> = {};
+export function getAvailableOptions(event: ExtendedEvent, playerStats: PlayerStats) {
+  const availableOptions: Record<string, ExtendedEvent['options'][string]> = {};
 
   for (const [key, option] of Object.entries(event.options)) {
     if (checkOptionConditions(option, playerStats)) {
@@ -158,4 +151,60 @@ export function getAvailableOptions(
   }
 
   return availableOptions;
+}
+
+// 檢查動物威脅事件
+export function checkAnimalThreatEvents(
+  playerStats: PlayerStats,
+  animalCollection: AnimalCollectionState,
+): ExtendedEvent | null {
+  // 只有收集到動物才可能觸發威脅事件
+  if (animalCollection.collectedAnimals.length === 0) {
+    console.log('威脅事件檢查: 沒有收集到動物');
+    return null;
+  }
+
+  console.log(`威脅事件檢查: 已收集 ${animalCollection.collectedAnimals.length} 隻動物`);
+
+  for (const collectedAnimal of animalCollection.collectedAnimals) {
+    const affinity = calculateAnimalAffinity(
+      collectedAnimal,
+      playerStats as unknown as Record<string, number>,
+    );
+
+    console.log(`檢查動物 ${collectedAnimal.name}: 親和度 ${affinity}`);
+
+    // 如果親和度太低（小於60），觸發威脅事件 (測試用，降低閾值)
+    if (affinity < 60) {
+      // 尋找對應的威脅事件
+      const threatEvent = animalThreatEvents.find(
+        (event) => event.animalEncounter?.animalId === collectedAnimal.id,
+      );
+
+      console.log(`觸發威脅事件條件滿足，尋找威脅事件:`, threatEvent ? threatEvent.name : '未找到');
+
+      if (threatEvent) {
+        return threatEvent;
+      }
+    }
+  }
+
+  console.log('威脅事件檢查: 沒有觸發條件');
+  return null;
+}
+
+// 修改getRandomEvent來優先處理動物威脅
+export function getRandomEventWithAnimalCheck(
+  playerStats: PlayerStats,
+  gameProgress: number,
+  animalCollection: AnimalCollectionState,
+): ExtendedEvent | null {
+  // 首先檢查是否有動物威脅事件
+  const threatEvent = checkAnimalThreatEvents(playerStats, animalCollection);
+  if (threatEvent) {
+    return threatEvent;
+  }
+
+  // 如果沒有威脅事件，返回正常的隨機事件
+  return getRandomEvent(playerStats, gameProgress);
 }
