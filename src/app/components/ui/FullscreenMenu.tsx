@@ -10,8 +10,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { FiMenu, FiX } from "react-icons/fi";
 
-import { ReactNode } from "react";
-
 import { LeftCornerTag } from "./LeftCornerTag";
 
 const MotionBox = motion(Box);

@@ -1,47 +1,10 @@
 "use client";
 
-import {
-  Box,
-  Text,
-  VStack,
-  HStack,
-  Badge,
-  Grid,
-  GridItem,
-} from "@chakra-ui/react";
-import {
-  PlayerStats,
-  personalityLabels,
-  STAT_LIMITS,
-} from "../../../types/game";
+import { Box, VStack, Text, HStack } from "@chakra-ui/react";
+import { PlayerStats, STAT_LIMITS } from "../../../types/game";
 
 interface StatsDisplayProps {
   stats: PlayerStats;
-}
-
-// 獲取人格標籤
-function getPersonalityLabel(trait: string, value: number): string {
-  const labels = personalityLabels[trait];
-  if (!labels) return "未知";
-
-  for (const [range, label] of Object.entries(labels)) {
-    const parts = range.split("~");
-    if (parts.length === 1) {
-      // 單一數值，如 "0"
-      const singleValue = Number(parts[0]);
-      if (value === singleValue) {
-        return label;
-      }
-    } else if (parts.length === 2) {
-      // 範圍，如 "-10~-4"
-      const min = Number(parts[0]);
-      const max = Number(parts[1]);
-      if (value >= min && value <= max) {
-        return label;
-      }
-    }
-  }
-  return "未知";
 }
 
 // 獲取進度條顏色

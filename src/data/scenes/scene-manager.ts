@@ -548,8 +548,8 @@ export function getAvailableLocations(): string[] {
 // 根據地點描述獲取事件ID列表
 export function getEventIdsByLocation(location: string): string[] {
   return Object.entries(SCENE_MAPPINGS)
-    .filter(([_, scene]) => scene.description === location)
-    .map(([eventId, _]) => eventId);
+    .filter(([, scene]) => scene.description === location)
+    .map(([eventId]) => eventId);
 }
 
 // 場景背景圖片路徑常量

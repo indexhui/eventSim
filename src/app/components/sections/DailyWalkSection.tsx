@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  Grid,
-  Image,
-  VStack,
-} from "@chakra-ui/react";
+import { Box, Container, Heading, Text } from "@chakra-ui/react";
 
 import {
   motion,
@@ -16,11 +8,11 @@ import {
   useTransform,
   useAnimationFrame,
 } from "framer-motion";
-import { ReactNode, useRef, useState } from "react";
-
-const MotionBox = motion(Box);
+import { useRef, useState } from "react";
 
 import { LeftCornerTag } from "../ui/LeftCornerTag";
+
+const MotionBox = motion(Box);
 
 function AnimatedGrowBox() {
   const ref = useRef(null);

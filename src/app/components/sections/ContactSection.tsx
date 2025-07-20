@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  VStack,
-  HStack,
-  Icon,
-  Link,
-} from "@chakra-ui/react";
-import { LuMail, LuInstagram, LuTwitter } from "react-icons/lu";
+import { Box, Container, Text } from "@chakra-ui/react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 import { useRef } from "react";

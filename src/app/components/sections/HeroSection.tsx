@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  VStack,
-  BoxProps,
-} from "@chakra-ui/react";
+import { Box, Container, Text, BoxProps } from "@chakra-ui/react";
 import { LeftCornerTag } from "../ui/LeftCornerTag";
 import { FullscreenMenu } from "../ui/FullscreenMenu";
 

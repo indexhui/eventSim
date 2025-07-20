@@ -1,4 +1,4 @@
-import { ExtendedEvent, EventTrigger } from "./constants";
+import { ExtendedEvent } from "./constants";
 import { dailyLifeEvents } from "./daily-life";
 import { workEvents } from "./work";
 import { socialEvents } from "./social";

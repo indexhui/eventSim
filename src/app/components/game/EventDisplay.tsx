@@ -14,7 +14,7 @@ interface EventDisplayProps {
 }
 
 export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
-  const { state, getAvailableOptions, toggleDeveloperMode } = useGame();
+  const { state, getAvailableOptions } = useGame();
   const {
     playerStats,
     isShowingConsequence,
