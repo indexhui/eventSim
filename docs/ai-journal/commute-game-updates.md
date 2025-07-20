@@ -1,111 +1,125 @@
 # 走走小日模擬器開發日誌
 
-## 2024-12-19 階段蛻變模式開發
+## 2024-12-19 - 遊戲模式實驗
 
-### 新增功能：階段蛻變模式
+### 階段蛻變模式開發
 
-#### 開發目標
+- 新增階段蛻變遊戲模式，每 5 個事件為一個階段
+- 實現階段評估系統，包含統計數據和建議
+- 添加玩家狀態系統設計（待實現）
+- 創建階段評估 UI 組件
 
-- 創建一個進階遊戲模式，通過階段性評估和狀態系統提升遊戲深度
-- 每 5 個事件為一個階段，提供明確的成長節點
-- 根據表現獲得持續性狀態，影響後續選擇
+### 技術實現
 
-#### 已完成功能
+- 擴展 GameContext 支持多種遊戲模式
+- 新增 StageEvaluationScreen 組件
+- 實現階段計算和統計邏輯
+- 添加狀態系統類型定義
 
-1. **基礎架構** ✅
+## 2025-07-21 - 分支合併與架構整合
 
-   - 階段計算邏輯：每 5 個事件為一個階段
-   - 階段狀態管理：追蹤當前階段、子階段、階段內事件數
-   - 階段轉換檢測：自動檢測階段完成並觸發評估
+### 主要任務：合併 main 分支與階段系統
 
-2. **階段評估頁面** ✅
+**時間**: 2025-07-21 深夜  
+**目標**: 以 main 分支架構為主要方向，整合動物系統和階段系統
 
-   - 創建 `StageEvaluationScreen.tsx` 組件
-   - 顯示階段統計（完成事件數、平均屬性變化）
-   - 階段建議生成：根據表現提供改進建議
-   - 美觀的 UI 界面，包含統計卡片和建議列表
+### 合併策略
 
-3. **階段評估觸發** ✅
-   - 在 `GameContext.tsx` 中集成階段評估邏輯
-   - 每 5 個事件後自動觸發階段評估
-   - 正確計算階段事件數量（修復了從 4 個事件到 5 個事件的問題）
-   - 階段評估頁面正確顯示
+1. **以 main 分支為主要方向**
 
-#### 技術實現
+   - 保持 main 的架構和 lint 規範
+   - 使用 `STAT_LIMITS` 常數進行屬性限制
+   - 維持 `let updatedState` 的狀態更新模式
+   - 保持人格標籤的範圍格式 (如 "-10~-4", "1~3")
 
-**文件修改**：
+2. **支持三種遊戲模式**
+   - **無限模式** (`infinite`): 純事件模式，無動物系統
+   - **無限混動物模式** (`infinite-animal`): 包含完整的動物收集系統
+   - **階段蛻變模式** (`stage`): 階段性評估和狀態系統，無動物
 
-- `src/types/game.ts`: 添加階段相關類型定義
-- `src/contexts/GameContext.tsx`: 實現階段邏輯和狀態管理
-- `src/app/components/game/GameScreen.tsx`: 集成階段模式 UI
-- `src/app/components/game/StageEvaluationScreen.tsx`: 階段評估頁面
+### 技術實現細節
 
-**核心功能**：
+#### 類型系統整合
 
-- 階段計算：`calculateStageInfo()` 函數
-- 階段轉換檢測：`shouldTransitionStage()` 函數
-- 階段統計計算：`calculateStageStats()` 函數
-- 階段評估觸發：在 `SELECT_OPTION` 中集成
+- 擴展 `GameMode` 類型為 `"infinite" | "infinite-animal" | "stage"`
+- 在 `GameState` 中同時包含動物收集和階段系統狀態
+- 保持 main 分支的人格標籤定義格式
 
-#### 用戶體驗
+#### Context 架構整合
 
-**階段顯示**：
+- 合併動物系統和階段系統的 action 類型
+- 根據遊戲模式選擇不同的事件生成邏輯
+- 動物邏輯只在 `infinite-animal` 模式下執行
+- 階段邏輯只在 `stage` 模式下執行
 
-- 在遊戲 header 中顯示當前階段（如：階段 1-1）
-- 只在階段蛻變模式下顯示階段信息
+#### UI 整合
 
-**階段評估流程**：
+- 在遊戲開始畫面添加三種模式選擇按鈕
+- 動物收集系統只在動物模式下顯示
+- 階段信息在階段模式下顯示在 header 中
 
-1. 完成 5 個事件後自動顯示階段評估頁面
-2. 查看階段統計和建議
-3. 點擊"進入下一階段"繼續遊戲
+### 遇到的問題與解決
 
-#### 下一步計劃
+#### 1. 無限遞迴錯誤
 
-1. **狀態獲得邏輯** (待開發)
+**問題**: `checkRestRequired` 和 `checkMoneyRequired` 函數調用自己
 
-   - 根據階段表現決定獲得狀態
-   - 設計狀態獲得條件（如：心情低於 30 獲得"內耗"狀態）
+```
+Error: Maximum call stack size exceeded
+src/contexts/GameContext.tsx (611:5) @ checkRestRequired
+```
 
-2. **狀態效果實現** (待開發)
+**解決**: 將遞迴調用改為直接返回邏輯結果
 
-   - 狀態對選項效果的影響
-   - 狀態持續性管理
-   - 狀態疊加和衝突處理
+```typescript
+// 修復前
+const checkRestRequired = (stats: PlayerStats) => {
+  return checkRestRequired(stats); // 無限遞迴
+};
 
-3. **體力恢復機制** (待開發)
-   - 階段結束時自動恢復體力
-   - 階段模式下的體力消耗調整
+// 修復後
+const checkRestRequired = (stats: PlayerStats) => {
+  return stats.心情 <= 0 || stats.體力 <= 0;
+};
+```
 
-#### 技術挑戰與解決
+#### 2. TypeScript 類型錯誤
 
-**問題**：階段評估顯示 4 個事件而不是 5 個
-**原因**：階段評估觸發時，第 5 個事件還沒有加入事件歷史
-**解決**：使用 `updatedState.eventHistory` 而不是 `state.eventHistory`
+**問題**: `StageEvaluationScreen.tsx` 使用 `any` 類型
 
-**問題**：Chakra UI 組件導入錯誤
-**原因**：某些組件在新版本中不存在
-**解決**：使用替代方案（VStack 替代 List，自定義圖標替代 Icon）
+```
+Error: Unexpected any. Specify a different type. @typescript-eslint/no-explicit-any
+```
 
-#### 文檔更新
+**解決**: 改為使用正確的類型並導入必要的類型
 
-創建了完整的模式規格文檔：
+```typescript
+// 修復前
+function generateRecommendations(averageStats: any): string[];
 
-- `docs/specs/stage-transformation-mode.md`: 詳細的模式規格和開發計劃
+// 修復後
+import { StageResult, PlayerStatus, PlayerStats } from '../../../types/game';
+function generateRecommendations(averageStats: Partial<PlayerStats>): string[];
+```
 
-### 開發統計
+### 合併結果
 
-- **新增文件**: 1 個 (StageEvaluationScreen.tsx)
-- **修改文件**: 4 個
-- **新增類型**: 5 個 (StageState, StageResult, PlayerStatus, StatusEffect, GameMode)
-- **新增函數**: 4 個 (階段計算相關)
-- **UI 組件**: 1 個完整的評估頁面
+- ✅ 成功合併 main 分支的動物系統
+- ✅ 保持 main 分支的架構和程式碼風格
+- ✅ 添加階段蛻變模式功能
+- ✅ 修復所有編譯錯誤和 lint 問題
+- ✅ 支持三種遊戲模式的完整功能
 
-### 測試狀態
+### 下一步計劃
 
-- ✅ 階段計算正確
-- ✅ 階段評估觸發正常
-- ✅ 階段評估頁面顯示正確
-- ✅ 階段事件數量計算正確
-- 🔄 狀態系統待測試
-- 🔄 體力恢復機制待測試
+1. 實現狀態獲得邏輯（基於階段表現）
+2. 實現狀態效果對遊戲的影響
+3. 在階段轉換時實現體力恢復和選項體力消耗調整
+4. 實現活躍狀態的 UI 顯示
+5. 繼續測試和平衡新模式的遊戲體驗
+
+### 技術債務
+
+- 需要完善狀態系統的實現
+- 可能需要優化階段評估的性能
+- 考慮添加更多遊戲模式的擴展性設計
