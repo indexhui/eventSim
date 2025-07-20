@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Box, VStack, Text, Button, Badge, HStack } from "@chakra-ui/react";
-import { useGame } from "../../../contexts/GameContext";
-import { ExtendedEvent } from "../../../types/game";
+import { Box, VStack, Text, Button, Badge, HStack } from '@chakra-ui/react';
+import { useGame } from '../../../contexts/GameContext';
+import { ExtendedEvent } from '../../../types/game';
 import {
   getPersonalityAdjustedOptions,
   addPersonalitySpecificOptions,
-} from "../../../data/events/personality-options";
-import { getAnimalById, calculateAnimalAffinity, canCollectAnimal } from "../../../data/animals";
+} from '../../../data/events/personality-options';
+import { getAnimalById, calculateAnimalAffinity, canCollectAnimal } from '../../../data/animals';
 
 interface EventDisplayProps {
   event: ExtendedEvent;
@@ -25,15 +25,12 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
   } = state;
 
   // 獲取個性調整後的選項
-  const personalityAdjustedOptions = getPersonalityAdjustedOptions(
-    event,
-    playerStats
-  );
+  const personalityAdjustedOptions = getPersonalityAdjustedOptions(event, playerStats);
 
   // 添加個性特定的選項
   const allOptions = addPersonalitySpecificOptions(
     { ...event, options: personalityAdjustedOptions },
-    playerStats
+    playerStats,
   );
 
   // 獲取可用的選項
@@ -54,13 +51,23 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
         textAlign="center"
       >
         <VStack gap={4}>
-          <Text fontSize="xl" fontWeight="bold" color="blue.800">
+          <Text
+            fontSize="xl"
+            fontWeight="bold"
+            color="blue.800"
+          >
             🎯 選擇結果
           </Text>
-          <Text fontSize="lg" color="blue.700">
+          <Text
+            fontSize="lg"
+            color="blue.700"
+          >
             {currentConsequence}
           </Text>
-          <Text fontSize="sm" color="blue.600">
+          <Text
+            fontSize="sm"
+            color="blue.600"
+          >
             正在進入下一個事件...
           </Text>
         </VStack>
@@ -76,24 +83,37 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
       border="1px solid"
       borderColor="gray.300"
     >
-      <VStack gap={4} align="stretch">
+      <VStack
+        gap={4}
+        align="stretch"
+      >
         {/* 事件標題和分類 */}
         <Box>
-          <HStack justify="space-between" mb={2}>
-            <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+          <HStack
+            justify="space-between"
+            mb={2}
+          >
+            <Text
+              fontSize="2xl"
+              fontWeight="bold"
+              color="gray.800"
+            >
               {event.name}
             </Text>
             <HStack gap={2}>
-              <Badge colorScheme="blue" variant="subtle">
+              <Badge
+                colorScheme="blue"
+                variant="subtle"
+              >
                 {event.category}
               </Badge>
               <Badge
                 colorScheme={
-                  event.difficulty === "easy"
-                    ? "green"
-                    : event.difficulty === "medium"
-                    ? "yellow"
-                    : "red"
+                  event.difficulty === 'easy'
+                    ? 'green'
+                    : event.difficulty === 'medium'
+                    ? 'yellow'
+                    : 'red'
                 }
                 variant="subtle"
               >
@@ -101,16 +121,27 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
               </Badge>
             </HStack>
           </HStack>
-          <Text fontSize="lg" color="gray.600">
+          <Text
+            fontSize="lg"
+            color="gray.600"
+          >
             {event.description}
           </Text>
         </Box>
 
         {/* 標籤 */}
         {event.tags && event.tags.length > 0 && (
-          <HStack gap={2} flexWrap="wrap">
+          <HStack
+            gap={2}
+            flexWrap="wrap"
+          >
             {event.tags.map((tag) => (
-              <Badge key={tag} color="gray.500" variant="outline" fontSize="xs">
+              <Badge
+                key={tag}
+                color="gray.500"
+                variant="outline"
+                fontSize="xs"
+              >
                 {tag}
               </Badge>
             ))}
@@ -126,64 +157,128 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
             border="1px solid"
             borderColor="purple.200"
           >
-            <Text fontSize="sm" fontWeight="bold" color="purple.800" mb={2}>
+            <Text
+              fontSize="sm"
+              fontWeight="bold"
+              color="purple.800"
+              mb={2}
+            >
               🦊 動物遭遇資訊
             </Text>
             {(() => {
               const animal = getAnimalById(event.animalEncounter.animalId);
               if (!animal) return null;
 
-              const isCollected = animalCollection.collectedAnimals.some(a => a.id === animal.id);
+              const isCollected = animalCollection.collectedAnimals.some((a) => a.id === animal.id);
               const encounterCount = animalCollection.animalEncounters[animal.id] || 0;
-              const canCollect = canCollectAnimal(animal, playerStats);
-              const affinity = calculateAnimalAffinity(animal, playerStats);
+              const canCollect = canCollectAnimal(
+                animal,
+                playerStats as unknown as Record<string, number>,
+              );
+              const affinity = calculateAnimalAffinity(
+                animal,
+                playerStats as unknown as Record<string, number>,
+              );
 
               return (
-                <VStack align="start" gap={2}>
+                <VStack
+                  align="start"
+                  gap={2}
+                >
                   <HStack gap={2}>
                     <Text fontSize="lg">{animal.icon}</Text>
-                    <Text fontSize="sm" fontWeight="semibold">{animal.name}</Text>
-                    <Badge colorScheme={
-                      animal.rarity === 'common' ? 'gray' :
-                      animal.rarity === 'uncommon' ? 'green' :
-                      animal.rarity === 'rare' ? 'blue' : 'purple'
-                    } size="sm">
-                      {animal.rarity === 'common' ? '常見' :
-                       animal.rarity === 'uncommon' ? '不常見' :
-                       animal.rarity === 'rare' ? '稀有' : '傳說'}
+                    <Text
+                      fontSize="sm"
+                      fontWeight="semibold"
+                    >
+                      {animal.name}
+                    </Text>
+                    <Badge
+                      colorScheme={
+                        animal.rarity === 'common'
+                          ? 'gray'
+                          : animal.rarity === 'uncommon'
+                          ? 'green'
+                          : animal.rarity === 'rare'
+                          ? 'blue'
+                          : 'purple'
+                      }
+                      size="sm"
+                    >
+                      {animal.rarity === 'common'
+                        ? '常見'
+                        : animal.rarity === 'uncommon'
+                        ? '不常見'
+                        : animal.rarity === 'rare'
+                        ? '稀有'
+                        : '傳說'}
                     </Badge>
                   </HStack>
-                  <Text fontSize="xs" color="gray.600">{animal.description}</Text>
-                  
-                  <HStack gap={4} flexWrap="wrap">
-                    <Badge colorScheme={isCollected ? "green" : "gray"} variant="outline" fontSize="xs">
-                      {isCollected ? "✓ 已收集" : "未收集"}
+                  <Text
+                    fontSize="xs"
+                    color="gray.600"
+                  >
+                    {animal.description}
+                  </Text>
+
+                  <HStack
+                    gap={4}
+                    flexWrap="wrap"
+                  >
+                    <Badge
+                      colorScheme={isCollected ? 'green' : 'gray'}
+                      variant="outline"
+                      fontSize="xs"
+                    >
+                      {isCollected ? '✓ 已收集' : '未收集'}
                     </Badge>
-                    <Badge colorScheme="blue" variant="outline" fontSize="xs">
+                    <Badge
+                      colorScheme="blue"
+                      variant="outline"
+                      fontSize="xs"
+                    >
                       遭遇次數: {encounterCount}
                     </Badge>
-                    <Badge colorScheme={canCollect ? "green" : "red"} variant="outline" fontSize="xs">
-                      {canCollect ? "✓ 可收集" : "✗ 條件未滿足"}
+                    <Badge
+                      colorScheme={canCollect ? 'green' : 'red'}
+                      variant="outline"
+                      fontSize="xs"
+                    >
+                      {canCollect ? '✓ 可收集' : '✗ 條件未滿足'}
                     </Badge>
-                    <Badge 
-                      colorScheme={affinity >= 70 ? "green" : affinity >= 50 ? "yellow" : "red"} 
-                      variant="outline" 
+                    <Badge
+                      colorScheme={affinity >= 70 ? 'green' : affinity >= 50 ? 'yellow' : 'red'}
+                      variant="outline"
                       fontSize="xs"
                     >
                       親和度: {affinity}%
                     </Badge>
                   </HStack>
 
-                  <HStack gap={2} flexWrap="wrap">
-                    <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                      遭遇類型: {
-                        event.animalEncounter.encounterType === 'sighting' ? '目擊' :
-                        event.animalEncounter.encounterType === 'interaction' ? '互動' :
-                        event.animalEncounter.encounterType === 'rescue' ? '救援' : '威脅'
-                      }
+                  <HStack
+                    gap={2}
+                    flexWrap="wrap"
+                  >
+                    <Badge
+                      colorScheme="purple"
+                      variant="subtle"
+                      fontSize="xs"
+                    >
+                      遭遇類型:{' '}
+                      {event.animalEncounter.encounterType === 'sighting'
+                        ? '目擊'
+                        : event.animalEncounter.encounterType === 'interaction'
+                        ? '互動'
+                        : event.animalEncounter.encounterType === 'rescue'
+                        ? '救援'
+                        : '威脅'}
                     </Badge>
                     {event.animalEncounter.collectionChance && (
-                      <Badge colorScheme="orange" variant="subtle" fontSize="xs">
+                      <Badge
+                        colorScheme="orange"
+                        variant="subtle"
+                        fontSize="xs"
+                      >
                         收集機率: {event.animalEncounter.collectionChance}%
                       </Badge>
                     )}
@@ -191,23 +286,33 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
 
                   {animal.personalityAffinity && animal.personalityAffinity.length > 0 && (
                     <Box>
-                      <Text fontSize="xs" fontWeight="bold" color="purple.700" mb={1}>
+                      <Text
+                        fontSize="xs"
+                        fontWeight="bold"
+                        color="purple.700"
+                        mb={1}
+                      >
                         性格親和度要求:
                       </Text>
-                      <HStack gap={1} flexWrap="wrap">
+                      <HStack
+                        gap={1}
+                        flexWrap="wrap"
+                      >
                         {animal.personalityAffinity.map((affinity, index) => {
-                          const currentValue = playerStats[affinity.trait as keyof typeof playerStats];
+                          const currentValue =
+                            playerStats[affinity.trait as keyof typeof playerStats];
                           const distance = Math.abs(currentValue - affinity.idealValue);
                           const isWithinTolerance = distance <= affinity.tolerance;
-                          
+
                           return (
-                            <Badge 
+                            <Badge
                               key={index}
-                              colorScheme={isWithinTolerance ? "green" : "red"} 
-                              variant="outline" 
+                              colorScheme={isWithinTolerance ? 'green' : 'red'}
+                              variant="outline"
                               fontSize="xs"
                             >
-                              {affinity.trait}: {affinity.idealValue}±{affinity.tolerance} (當前: {currentValue})
+                              {affinity.trait}: {affinity.idealValue}±{affinity.tolerance} (當前:{' '}
+                              {currentValue})
                             </Badge>
                           );
                         })}
@@ -221,8 +326,15 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
         )}
 
         {/* 選項 */}
-        <VStack gap={3} align="stretch">
-          <Text fontSize="lg" fontWeight="semibold" color="gray.800">
+        <VStack
+          gap={3}
+          align="stretch"
+        >
+          <Text
+            fontSize="lg"
+            fontWeight="semibold"
+            color="gray.800"
+          >
             選擇你的行動：
           </Text>
 
@@ -231,39 +343,38 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
             const isDisabled = !isAvailable;
 
             // 檢查為什麼選項不可用
-            let disabledReason = "";
+            let disabledReason = '';
             if (!isAvailable && option.conditions) {
               for (const condition of option.conditions) {
-                const currentValue =
-                  playerStats[condition.stat as keyof typeof playerStats];
+                const currentValue = playerStats[condition.stat as keyof typeof playerStats];
 
                 let conditionMet = false;
                 switch (condition.operator) {
-                  case "gte":
+                  case 'gte':
                     conditionMet = currentValue >= condition.value;
                     if (!conditionMet) {
                       disabledReason = `需要 ${condition.stat} ≥ ${condition.value}（當前：${currentValue}）`;
                     }
                     break;
-                  case "lte":
+                  case 'lte':
                     conditionMet = currentValue <= condition.value;
                     if (!conditionMet) {
                       disabledReason = `需要 ${condition.stat} ≤ ${condition.value}（當前：${currentValue}）`;
                     }
                     break;
-                  case "eq":
+                  case 'eq':
                     conditionMet = currentValue === condition.value;
                     if (!conditionMet) {
                       disabledReason = `需要 ${condition.stat} = ${condition.value}（當前：${currentValue}）`;
                     }
                     break;
-                  case "gt":
+                  case 'gt':
                     conditionMet = currentValue > condition.value;
                     if (!conditionMet) {
                       disabledReason = `需要 ${condition.stat} > ${condition.value}（當前：${currentValue}）`;
                     }
                     break;
-                  case "lt":
+                  case 'lt':
                     conditionMet = currentValue < condition.value;
                     if (!conditionMet) {
                       disabledReason = `需要 ${condition.stat} < ${condition.value}（當前：${currentValue}）`;
@@ -279,41 +390,35 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
 
             // 檢查是否為個性特定選項
             const isPersonalityOption =
-              key === "D" &&
-              (option.text.includes("額外") ||
-                option.text.includes("直接") ||
-                option.text.includes("深入了解") ||
-                option.text.includes("勉強接受") ||
-                option.text.includes("再想想") ||
-                option.text.includes("逃避"));
+              key === 'D' &&
+              (option.text.includes('額外') ||
+                option.text.includes('直接') ||
+                option.text.includes('深入了解') ||
+                option.text.includes('勉強接受') ||
+                option.text.includes('再想想') ||
+                option.text.includes('逃避'));
 
             // 檢查是否為內耗選項
             const isBurnoutOption =
-              option.text.includes("勉強") ||
-              option.text.includes("內耗") ||
-              option.text.includes("尷尬") ||
-              option.text.includes("不舒服");
+              option.text.includes('勉強') ||
+              option.text.includes('內耗') ||
+              option.text.includes('尷尬') ||
+              option.text.includes('不舒服');
 
             return (
               <Box key={key}>
                 <Button
                   w="100%"
                   size="lg"
-                  variant={
-                    isDisabled
-                      ? "outline"
-                      : isPersonalityOption
-                      ? "solid"
-                      : "solid"
-                  }
+                  variant={isDisabled ? 'outline' : isPersonalityOption ? 'solid' : 'solid'}
                   colorScheme={
                     isDisabled
-                      ? "gray"
+                      ? 'gray'
                       : isPersonalityOption
-                      ? "purple"
+                      ? 'purple'
                       : isBurnoutOption
-                      ? "orange"
-                      : "blue"
+                      ? 'orange'
+                      : 'blue'
                   }
                   onClick={() => !isDisabled && onSelectOption(key)}
                   disabled={isDisabled}
@@ -324,8 +429,15 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
                   h="auto"
                   whiteSpace="normal"
                 >
-                  <VStack align="start" gap={1} w="100%">
-                    <HStack w="100%" justify="space-between">
+                  <VStack
+                    align="start"
+                    gap={1}
+                    w="100%"
+                  >
+                    <HStack
+                      w="100%"
+                      justify="space-between"
+                    >
                       <Text fontWeight="semibold">
                         {key}. {option.text}
                       </Text>
@@ -369,28 +481,23 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
                         >
                           影響數值：
                         </Text>
-                        <HStack gap={2} flexWrap="wrap">
-                          {Object.entries(option.statChanges).map(
-                            ([stat, value]) => (
-                              <Badge
-                                key={stat}
-                                colorScheme={
-                                  value > 0
-                                    ? "green"
-                                    : value < 0
-                                    ? "red"
-                                    : "gray"
-                                }
-                                variant="subtle"
-                                fontSize="xs"
-                              >
-                                {stat}: {value > 0 ? "+" : ""}
-                                {value}
-                              </Badge>
-                            )
-                          )}
+                        <HStack
+                          gap={2}
+                          flexWrap="wrap"
+                        >
+                          {Object.entries(option.statChanges).map(([stat, value]) => (
+                            <Badge
+                              key={stat}
+                              colorScheme={value > 0 ? 'green' : value < 0 ? 'red' : 'gray'}
+                              variant="subtle"
+                              fontSize="xs"
+                            >
+                              {stat}: {value > 0 ? '+' : ''}
+                              {value}
+                            </Badge>
+                          ))}
                         </HStack>
-                        
+
                         {/* 動物相關功能 */}
                         {(option.animalCollection || option.preventAnimalLeave) && (
                           <Box mt={2}>
@@ -402,14 +509,25 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
                             >
                               動物功能：
                             </Text>
-                            <HStack gap={2} flexWrap="wrap">
+                            <HStack
+                              gap={2}
+                              flexWrap="wrap"
+                            >
                               {option.animalCollection && (
-                                <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                                <Badge
+                                  colorScheme="green"
+                                  variant="subtle"
+                                  fontSize="xs"
+                                >
                                   🦊 可能收集動物
                                 </Badge>
                               )}
                               {option.preventAnimalLeave && (
-                                <Badge colorScheme="blue" variant="subtle" fontSize="xs">
+                                <Badge
+                                  colorScheme="blue"
+                                  variant="subtle"
+                                  fontSize="xs"
+                                >
                                   🛡️ 阻止動物離開
                                 </Badge>
                               )}
@@ -427,23 +545,24 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
                             >
                               條件限制：
                             </Text>
-                            <VStack gap={1} align="start">
+                            <VStack
+                              gap={1}
+                              align="start"
+                            >
                               {option.conditions.map((condition, index) => {
                                 const currentValue =
-                                  playerStats[
-                                    condition.stat as keyof typeof playerStats
-                                  ];
+                                  playerStats[condition.stat as keyof typeof playerStats];
                                 const isMet = (() => {
                                   switch (condition.operator) {
-                                    case "gte":
+                                    case 'gte':
                                       return currentValue >= condition.value;
-                                    case "lte":
+                                    case 'lte':
                                       return currentValue <= condition.value;
-                                    case "eq":
+                                    case 'eq':
                                       return currentValue === condition.value;
-                                    case "gt":
+                                    case 'gt':
                                       return currentValue > condition.value;
-                                    case "lt":
+                                    case 'lt':
                                       return currentValue < condition.value;
                                     default:
                                       return false;
@@ -451,22 +570,21 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
                                 })();
 
                                 const operatorText = {
-                                  gte: "≥",
-                                  lte: "≤",
-                                  eq: "=",
-                                  gt: ">",
-                                  lt: "<",
+                                  gte: '≥',
+                                  lte: '≤',
+                                  eq: '=',
+                                  gt: '>',
+                                  lt: '<',
                                 }[condition.operator];
 
                                 return (
                                   <Badge
                                     key={index}
-                                    colorScheme={isMet ? "green" : "red"}
+                                    colorScheme={isMet ? 'green' : 'red'}
                                     variant="outline"
                                     fontSize="xs"
                                   >
-                                    {condition.stat} {operatorText}{" "}
-                                    {condition.value}
+                                    {condition.stat} {operatorText} {condition.value}
                                     {!isMet && ` (當前: ${currentValue})`}
                                   </Badge>
                                 );
@@ -478,7 +596,10 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
                     )}
 
                     {isDisabled && disabledReason && (
-                      <Text fontSize="sm" color="red.500">
+                      <Text
+                        fontSize="sm"
+                        color="red.500"
+                      >
                         ⚠️ {disabledReason}
                       </Text>
                     )}
@@ -499,10 +620,16 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
             borderRadius="md"
           >
             <HStack>
-              <Text fontSize="lg" color="orange.600">
+              <Text
+                fontSize="lg"
+                color="orange.600"
+              >
                 ⚠️
               </Text>
-              <Text fontSize="sm" color="orange.700">
+              <Text
+                fontSize="sm"
+                color="orange.700"
+              >
                 目前沒有可用的選項，可能需要調整你的屬性值。
               </Text>
             </HStack>

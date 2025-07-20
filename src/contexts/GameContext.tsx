@@ -221,7 +221,7 @@ function gameReducer(
                 animalCollection: {
                   ...updatedState.animalCollection,
                   collectedAnimals: updatedState.animalCollection.collectedAnimals.filter(
-                    a => a.id !== state.animalCollection.pendingAnimalRisk.animalId
+                    a => a.id !== state.animalCollection.pendingAnimalRisk?.animalId
                   ),
                   pendingAnimalRisk: undefined,
                 },

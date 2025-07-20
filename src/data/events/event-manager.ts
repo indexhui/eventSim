@@ -144,7 +144,7 @@ export function checkAnimalThreatEvents(playerStats: PlayerStats, animalCollecti
   if (animalCollection.collectedAnimals.length === 0) return null
 
   for (const collectedAnimal of animalCollection.collectedAnimals) {
-    const affinity = calculateAnimalAffinity(collectedAnimal, playerStats)
+    const affinity = calculateAnimalAffinity(collectedAnimal, playerStats as unknown as Record<string, number>)
 
     // 如果親和度太低（小於30），觸發威脅事件
     if (affinity < 30) {
