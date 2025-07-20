@@ -181,32 +181,50 @@ function gameReducer(
 
           // 處理動物收集
           if (selectedOption.animalCollection && encounterType !== 'threat') {
-            const canCollect = canCollectAnimal(animal, newStats);
-            const affinity = calculateAnimalAffinity(animal, newStats);
-            const randomChance = Math.random() * 100;
+            // 檢查是否已經收集過這隻動物
+            const alreadyCollected = updatedState.animalCollection.collectedAnimals.some(a => a.id === animal.id);
             
-            // 收集成功的機率受親和度影響
-            const finalChance = (collectionChance * affinity) / 100;
-            
-            if (canCollect && randomChance <= finalChance) {
-              // 收集動物
-              updatedState = {
-                ...updatedState,
-                animalCollection: {
-                  ...updatedState.animalCollection,
-                  collectedAnimals: [
-                    ...updatedState.animalCollection.collectedAnimals,
-                    { ...animal, dateCollected: Date.now() },
-                  ],
-                },
-              };
+            if (!alreadyCollected) {
+              const canCollect = canCollectAnimal(animal, newStats as unknown as Record<string, number>);
+              const affinity = calculateAnimalAffinity(animal, newStats as unknown as Record<string, number>);
+              const randomChance = Math.random() * 100;
+              
+              // 收集成功的機率：100%收集率時不受親和度影響，其他情況受親和度影響
+              const finalChance = collectionChance === 100 ? 100 : (collectionChance * affinity) / 100;
+              
+              // 開發者模式下顯示調試信息
+              if (state.isDeveloperMode) {
+                console.log(`動物收集調試 - ${animal.name}:`, {
+                  canCollect,
+                  collectionChance,
+                  affinity,
+                  finalChance,
+                  randomChance,
+                  newStats,
+                  unlockCondition: animal.unlockCondition
+                });
+              }
+              
+              if (canCollect && randomChance <= finalChance) {
+                // 收集動物
+                updatedState = {
+                  ...updatedState,
+                  animalCollection: {
+                    ...updatedState.animalCollection,
+                    collectedAnimals: [
+                      ...updatedState.animalCollection.collectedAnimals,
+                      { ...animal, dateCollected: Date.now() },
+                    ],
+                  },
+                };
+              }
             }
           }
 
           // 處理動物離開威脅
-          if (encounterType === 'threat' && state.animalCollection.pendingAnimalRisk) {
-            if (selectedOption.preventAnimalLeave) {
-              // 成功阻止動物離開
+          if (encounterType === 'threat') {
+            if (selectedOption.preventAnimalLeave === true) {
+              // 成功阻止動物離開，清除風險狀態
               updatedState = {
                 ...updatedState,
                 animalCollection: {
@@ -214,14 +232,15 @@ function gameReducer(
                   pendingAnimalRisk: undefined,
                 },
               };
-            } else {
-              // 動物離開
+            } else if (selectedOption.preventAnimalLeave === false) {
+              // 動物離開，從收集列表中移除
+              console.log(`動物 ${animal?.name} (${animalId}) 離開了，從收集列表中移除`);
               updatedState = {
                 ...updatedState,
                 animalCollection: {
                   ...updatedState.animalCollection,
                   collectedAnimals: updatedState.animalCollection.collectedAnimals.filter(
-                    a => a.id !== state.animalCollection.pendingAnimalRisk?.animalId
+                    a => a.id !== animalId
                   ),
                   pendingAnimalRisk: undefined,
                 },

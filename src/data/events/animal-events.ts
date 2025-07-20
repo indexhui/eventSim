@@ -13,7 +13,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_001',
       encounterType: 'interaction',
-      collectionChance: 70,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -45,7 +45,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_002',
       encounterType: 'sighting',
-      collectionChance: 50,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -72,7 +72,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_003',
       encounterType: 'interaction',
-      collectionChance: 60,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -106,7 +106,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_005',
       encounterType: 'interaction',
-      collectionChance: 40,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -139,7 +139,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_006',
       encounterType: 'sighting',
-      collectionChance: 35,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -167,7 +167,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_007',
       encounterType: 'rescue',
-      collectionChance: 45,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -196,7 +196,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_009',
       encounterType: 'rescue',
-      collectionChance: 25,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -226,7 +226,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_010',
       encounterType: 'sighting',
-      collectionChance: 20,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -256,7 +256,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_011',
       encounterType: 'sighting',
-      collectionChance: 15,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -285,7 +285,7 @@ export const animalEvents: ExtendedEvent[] = [
     animalEncounter: {
       animalId: 'ANIMAL_012',
       encounterType: 'sighting',
-      collectionChance: 5,
+      collectionChance: 100,
     },
     options: {
       A: {
@@ -303,6 +303,73 @@ export const animalEvents: ExtendedEvent[] = [
         text: '靜靜欣賞這奇蹟',
         statChanges: { 心情: 10, 穩定性: 2 },
         consequences: ['能見到傳說中的金魚已經是莫大的幸運。'],
+      },
+    },
+  },
+
+  // 遺漏的常見動物事件
+  {
+    id: 'ANIMAL_EVENT_011',
+    name: '公園裡的鴿子聚會',
+    description: '午餐時間在公園，你看到一群鴿子圍著長椅，似乎在等待有人分享食物。',
+    category: 'animal',
+    difficulty: 'easy',
+    tags: ['動物', '公園'],
+    animalEncounter: {
+      animalId: 'ANIMAL_004',
+      encounterType: 'interaction',
+      collectionChance: 100,
+    },
+    options: {
+      A: {
+        text: '分享你的三明治',
+        statChanges: { 心情: 3, 體力: -1 },
+        consequences: ['鴿子們開心地享用食物，其中一隻特別親近你。'],
+        animalCollection: true,
+      },
+      B: {
+        text: '安靜地觀察牠們的互動',
+        statChanges: { 心情: 2, 決斷力: -1 },
+        consequences: ['你享受這份寧靜，感受到都市中的自然之美。'],
+        animalCollection: true,
+      },
+      C: {
+        text: '快步離開避免打擾',
+        statChanges: { 體力: -1 },
+        consequences: ['你不想打擾牠們的聚會，悄悄走開。'],
+      },
+    },
+  },
+  {
+    id: 'ANIMAL_EVENT_012',
+    name: '捷運站的小偷',
+    description: '等車時，你注意到月台角落有隻小老鼠在撿拾掉落的食物碎屑。牠動作敏捷，很懂得利用人群掩護。',
+    category: 'animal',
+    difficulty: 'medium',
+    tags: ['動物', '通勤'],
+    animalEncounter: {
+      animalId: 'ANIMAL_008',
+      encounterType: 'sighting',
+      collectionChance: 100,
+    },
+    options: {
+      A: {
+        text: '假裝不經意地丟些麵包屑',
+        statChanges: { 專注力: -2, 同理心: 1 },
+        conditions: [{ stat: '專注力', operator: 'lte', value: -3 }],
+        consequences: ['你的不經意舉動讓小老鼠得到了豐盛的一餐。'],
+        animalCollection: true,
+      },
+      B: {
+        text: '仔細觀察牠的行動路線',
+        statChanges: { 專注力: -1, 好奇心: 2 },
+        consequences: ['你發現小老鼠對捷運系統比你還熟悉！'],
+        animalCollection: true,
+      },
+      C: {
+        text: '繼續專心等車',
+        statChanges: { 專注力: 1 },
+        consequences: ['你專注地等待列車進站。'],
       },
     },
   },
@@ -340,9 +407,10 @@ export const animalThreatEvents: ExtendedEvent[] = [
         preventAnimalLeave: true,
       },
       C: {
-        text: '讓牠自由選擇',
-        statChanges: { 心情: -10 },
-        consequences: ['小花貓失望地離開了，去尋找新的歸宿。'],
+        text: '冷漠地無視牠的需求',
+        statChanges: { 心情: -10, 同理心: -2 },
+        consequences: ['小花貓失望地離開了，去尋找更有愛的主人。'],
+        preventAnimalLeave: false,
       },
     },
   },
@@ -376,9 +444,10 @@ export const animalThreatEvents: ExtendedEvent[] = [
         preventAnimalLeave: true,
       },
       C: {
-        text: '接受牠有了新朋友',
-        statChanges: { 心情: -8, 社交傾向: -2 },
-        consequences: ['柴犬選擇了更常陪伴牠的新主人。'],
+        text: '因為太忙而疏遠牠',
+        statChanges: { 心情: -8, 社交傾向: -3 },
+        consequences: ['柴犬失望地選擇了更常陪伴牠的新主人。'],
+        preventAnimalLeave: false,
       },
     },
   },
@@ -412,9 +481,10 @@ export const animalThreatEvents: ExtendedEvent[] = [
         preventAnimalLeave: true,
       },
       C: {
-        text: '承認無法給牠需要的',
-        statChanges: { 心情: -15, 同理心: 1 },
-        consequences: ['你理解地讓刺蝟離開，希望牠找到更好的家。'],
+        text: '繼續情緒起伏，無視牠的感受',
+        statChanges: { 心情: -15, 穩定性: -3 },
+        consequences: ['刺蝟無法忍受不穩定的環境，離開去尋找安靜的新家。'],
+        preventAnimalLeave: false,
       },
     },
   },
@@ -455,13 +525,51 @@ export const animalThreatEvents: ExtendedEvent[] = [
         preventAnimalLeave: true,
       },
       C: {
-        text: '感謝相遇，放手祝福',
-        statChanges: { 心情: -20, 同理心: 5 },
-        consequences: ['金魚化作一道金光消失，但你心中充滿感激。'],
+        text: '堅持自己的改變，不願回頭',
+        statChanges: { 心情: -20, 好奇心: -3 },
+        consequences: ['金魚對你的改變失望，化作金光離去尋找更純淨的心靈。'],
+        preventAnimalLeave: false,
+      },
+    },
+  },
+  {
+    id: 'ANIMAL_THREAT_005',
+    name: '鴴子的食物競爭',
+    description: '你收集的公園鴿子發現你最近決斷力變強，不再像以前那樣悠閒地分享食物了。牠考慮離開去找更慷慨的人。',
+    category: 'animal',
+    difficulty: 'easy',
+    tags: ['動物', '威脅'],
+    animalEncounter: {
+      animalId: 'ANIMAL_004',
+      encounterType: 'threat',
+      leaveCondition: {
+        trait: '決斷力',
+        threshold: 3,
+        operator: 'gte'
+      }
+    },
+    options: {
+      A: {
+        text: '重新變得悠閒一些',
+        statChanges: { 決斷力: -2, 心情: 3 },
+        consequences: ['鴿子感受到你的改變，決定繼續留在你身邊。'],
+        preventAnimalLeave: true,
+      },
+      B: {
+        text: '買更多麵包屑給牠們',
+        statChanges: { 儲蓄: -50, 決斷力: -1 },
+        consequences: ['豐富的食物讓鴿子們開心地留了下來。'],
+        preventAnimalLeave: true,
+      },
+      C: {
+        text: '堅持自己的節奏，不再餵食',
+        statChanges: { 心情: -5, 決斷力: 2 },
+        consequences: ['鴿子失望地飛走，去尋找更願意分享的人。'],
+        preventAnimalLeave: false,
       },
     },
   },
 ];
 
-// 將動物事件加入事件池
-export const allAnimalEvents = [...animalEvents, ...animalThreatEvents];
+// 將動物事件加入事件池（威脅事件不包含在內，只能通過特定邏輯觸發）
+export const allAnimalEvents = [...animalEvents];
