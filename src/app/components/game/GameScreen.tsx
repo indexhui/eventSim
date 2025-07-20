@@ -16,6 +16,7 @@ import { EventDisplay } from "./EventDisplay";
 import { SceneDisplay } from "./SceneDisplay";
 import { RestScreen } from "./RestScreen";
 import { EventListPage } from "./EventListPage";
+import { StageEvaluationScreen } from "./StageEvaluationScreen";
 import { useState } from "react";
 
 // 頁面類型
@@ -28,7 +29,7 @@ function GameHeader({
   onNavigateToEventList: () => void;
 }) {
   const { state, resetGame, toggleDeveloperMode } = useGame();
-  const { gameProgress, isDeveloperMode } = state;
+  const { gameProgress, isDeveloperMode, gameMode, stageState } = state;
 
   return (
     <Box
@@ -43,9 +44,16 @@ function GameHeader({
     >
       <Flex justify="space-between" align="center">
         {/* 左側：事件進度 */}
-        <Text fontSize="lg" fontWeight="semibold" color="gray.800">
-          事件 {gameProgress + 1}
-        </Text>
+        <HStack gap={4}>
+          <Text fontSize="lg" fontWeight="semibold" color="gray.800">
+            事件 {gameProgress + 1}
+          </Text>
+          {gameMode === "stage" && (
+            <Text fontSize="md" color="purple.600" fontWeight="medium">
+              階段 {stageState.currentStage}-{stageState.currentSubStage}
+            </Text>
+          )}
+        </HStack>
 
         {/* 中間：開發者模式開關 */}
         <HStack gap={2} align="center">
@@ -89,9 +97,16 @@ function GameHeader({
 }
 
 export function GameScreen() {
-  const { state, startGame, selectOption, resetGame } = useGame();
-  const { playerStats, currentEvent, isGameStarted, gameProgress, isResting } =
-    state;
+  const { state, startGame, selectOption, resetGame, hideStageEvaluation } =
+    useGame();
+  const {
+    playerStats,
+    currentEvent,
+    isGameStarted,
+    gameProgress,
+    isResting,
+    stageResult,
+  } = state;
 
   // 頁面狀態管理
   const [currentPage, setCurrentPage] = useState<PageType>("game");
@@ -111,6 +126,19 @@ export function GameScreen() {
     return <EventListPage onNavigateToGame={navigateToGame} />;
   }
 
+  // 階段評估頁面
+  if (stageResult) {
+    return (
+      <StageEvaluationScreen
+        stageResult={stageResult}
+        onContinue={() => {
+          hideStageEvaluation();
+          // 這裡將來會添加進入下一階段的邏輯
+        }}
+      />
+    );
+  }
+
   // 遊戲開始畫面
   if (!isGameStarted) {
     return (
@@ -128,12 +156,22 @@ export function GameScreen() {
                 <Button
                   size="lg"
                   colorScheme="blue"
-                  onClick={startGame}
+                  onClick={() => startGame("infinite")}
                   px={8}
                   py={6}
                   fontSize="lg"
                 >
-                  開始遊戲
+                  無限模式
+                </Button>
+                <Button
+                  size="lg"
+                  colorScheme="purple"
+                  onClick={() => startGame("stage")}
+                  px={8}
+                  py={6}
+                  fontSize="lg"
+                >
+                  階段蛻變
                 </Button>
                 <Button
                   size="lg"

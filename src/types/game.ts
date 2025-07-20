@@ -84,6 +84,41 @@ export interface PersonalityLabels {
   };
 }
 
+// 階段狀態介面
+export interface StageState {
+  currentStage: number; // 當前階段 (1, 2, 3...)
+  currentSubStage: number; // 當前子階段 (1, 2, 3...)
+  eventsInCurrentStage: number; // 當前階段內的事件數 (0-4)
+  stageHistory: StageResult[]; // 階段歷史記錄
+}
+
+// 階段結果介面
+export interface StageResult {
+  stage: number;
+  subStage: number;
+  events: EventResult[];
+  averageStats: Partial<PlayerStats>;
+  gainedStatus: PlayerStatus[];
+  timestamp: number;
+}
+
+// 玩家狀態介面
+export interface PlayerStatus {
+  id: string;
+  name: string;
+  description: string;
+  effects: StatusEffect[];
+  duration: number; // 持續階段數，-1表示永久
+}
+
+// 狀態效果介面
+export interface StatusEffect {
+  type: "stat_modifier" | "option_modifier" | "restore_modifier";
+  target: keyof PlayerStats | "all_options";
+  value: number;
+  condition?: string;
+}
+
 // 遊戲狀態介面
 export interface GameState {
   playerStats: PlayerStats;
@@ -96,7 +131,13 @@ export interface GameState {
   restDays: number; // 休息天數
   currentConsequence: string | null; // 當前選擇的後果
   isShowingConsequence: boolean; // 是否正在顯示後果
+  gameMode: GameMode; // 遊戲模式
+  stageState: StageState; // 階段狀態
+  activeStatuses: PlayerStatus[]; // 當前活躍的狀態
 }
+
+// 遊戲模式類型
+export type GameMode = "infinite" | "stage";
 
 // 初始玩家屬性
 export const initialPlayerStats: PlayerStats = {

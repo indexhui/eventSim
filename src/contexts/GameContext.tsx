@@ -9,6 +9,10 @@ import {
   personalityLabels,
   STAT_LIMITS,
   ExtendedEvent,
+  GameMode,
+  StageState,
+  PlayerStatus,
+  StageResult,
 } from "../types/game";
 import {
   getRandomEvent,
@@ -17,7 +21,7 @@ import {
 
 // 遊戲動作類型
 type GameAction =
-  | { type: "START_GAME" }
+  | { type: "START_GAME"; mode?: GameMode }
   | { type: "SELECT_OPTION"; optionKey: string }
   | { type: "NEXT_EVENT" }
   | { type: "RESET_GAME" }
@@ -26,7 +30,9 @@ type GameAction =
   | { type: "END_REST" }
   | { type: "SHOW_CONSEQUENCE"; consequence: string }
   | { type: "HIDE_CONSEQUENCE" }
-  | { type: "TOGGLE_DEVELOPER_MODE" };
+  | { type: "TOGGLE_DEVELOPER_MODE" }
+  | { type: "SHOW_STAGE_EVALUATION"; stageResult: StageResult }
+  | { type: "HIDE_STAGE_EVALUATION" };
 
 // 擴展的遊戲狀態
 interface ExtendedGameState extends GameState {
@@ -35,7 +41,16 @@ interface ExtendedGameState extends GameState {
   currentConsequence: string | null;
   isShowingConsequence: boolean;
   isDeveloperMode: boolean;
+  stageResult: StageResult | null; // 當前階段評估結果
 }
+
+// 初始階段狀態
+const initialStageState: StageState = {
+  currentStage: 1,
+  currentSubStage: 1,
+  eventsInCurrentStage: 0,
+  stageHistory: [],
+};
 
 // 初始遊戲狀態
 const initialState: ExtendedGameState = {
@@ -50,6 +65,10 @@ const initialState: ExtendedGameState = {
   currentConsequence: null,
   isShowingConsequence: false,
   isDeveloperMode: false,
+  gameMode: "infinite",
+  stageState: initialStageState,
+  activeStatuses: [],
+  stageResult: null,
 };
 
 // 檢查是否需要休息
@@ -63,6 +82,57 @@ function checkMoneyRequired(
   requiredAmount: number = 0
 ): boolean {
   return stats.儲蓄 >= requiredAmount;
+}
+
+// 計算當前階段信息
+function calculateStageInfo(gameProgress: number): {
+  stage: number;
+  subStage: number;
+  eventsInStage: number;
+} {
+  const stage = Math.floor(gameProgress / 5) + 1;
+  const subStage = Math.floor((gameProgress % 25) / 5) + 1;
+  const eventsInStage = gameProgress % 5;
+
+  return { stage, subStage, eventsInStage };
+}
+
+// 檢查是否需要階段轉換
+function shouldTransitionStage(eventsInCurrentStage: number): boolean {
+  return eventsInCurrentStage >= 5;
+}
+
+// 計算階段統計數據
+function calculateStageStats(
+  eventHistory: EventResult[],
+  stageStartIndex: number
+): Partial<PlayerStats> {
+  const stageEvents = eventHistory.slice(stageStartIndex);
+  const averageStats: Partial<PlayerStats> = {};
+
+  if (stageEvents.length === 0) return averageStats;
+
+  const statKeys: (keyof PlayerStats)[] = [
+    "心情",
+    "儲蓄",
+    "體力",
+    "專注力",
+    "時間感",
+    "社交傾向",
+    "決斷力",
+    "好奇心",
+    "同理心",
+    "穩定性",
+  ];
+
+  statKeys.forEach((key) => {
+    const totalChange = stageEvents.reduce((sum, event) => {
+      return sum + (event.statChanges[key] || 0);
+    }, 0);
+    averageStats[key] = totalChange / stageEvents.length;
+  });
+
+  return averageStats;
 }
 
 // 遊戲狀態 reducer
@@ -81,6 +151,7 @@ function gameReducer(
         restDays: 0,
         currentConsequence: null,
         isShowingConsequence: false,
+        gameMode: action.mode || "infinite",
       };
 
     case "SELECT_OPTION": {
@@ -139,6 +210,65 @@ function gameReducer(
         currentConsequence: selectedOption.consequences?.[0] || null,
         isShowingConsequence: true,
       };
+
+      // 階段模式：更新階段狀態
+      if (state.gameMode === "stage") {
+        const { stage, subStage, eventsInStage } = calculateStageInfo(
+          state.gameProgress + 1
+        );
+        const newStageState = {
+          ...state.stageState,
+          currentStage: stage,
+          currentSubStage: subStage,
+          eventsInCurrentStage: eventsInStage,
+        };
+
+        // 檢查是否需要階段轉換（當eventsInStage為0時，表示剛完成一個階段）
+        if (eventsInStage === 0 && state.gameProgress > 0) {
+          console.log(
+            `階段轉換觸發: 遊戲進度=${
+              state.gameProgress + 1
+            }, 階段=${stage}, 子階段=${subStage}, 階段內事件=${eventsInStage}`
+          );
+          console.log(`事件歷史總數: ${updatedState.eventHistory.length}`);
+
+          // 計算階段結果 - 取最近5個事件（包含剛加入的事件）
+          const stageStartIndex = Math.max(
+            0,
+            updatedState.eventHistory.length - 5
+          );
+          const stageEvents = updatedState.eventHistory.slice(stageStartIndex);
+          const stageStats = calculateStageStats(
+            updatedState.eventHistory,
+            stageStartIndex
+          );
+
+          console.log(`階段開始索引: ${stageStartIndex}`);
+          console.log(`階段事件數量: ${stageEvents.length}`);
+          console.log(
+            `階段事件:`,
+            stageEvents.map((e) => e.eventId)
+          );
+
+          const stageResult: StageResult = {
+            stage: stage,
+            subStage: subStage,
+            events: stageEvents,
+            averageStats: stageStats,
+            gainedStatus: [], // 暫時為空，將來會添加狀態獲得邏輯
+            timestamp: Date.now(),
+          };
+
+          console.log("階段結果:", stageResult);
+
+          // 顯示階段評估
+          updatedState.stageResult = stageResult;
+          updatedState.isShowingConsequence = false;
+          updatedState.currentConsequence = null;
+        }
+
+        updatedState.stageState = newStageState;
+      }
 
       // 檢查是否需要休息
       if (checkRestRequired(newStats)) {
@@ -214,6 +344,24 @@ function gameReducer(
         isDeveloperMode: !state.isDeveloperMode,
       };
 
+    case "SHOW_STAGE_EVALUATION":
+      return {
+        ...state,
+        isShowingConsequence: false, // Hide previous consequence
+        currentConsequence: null,
+        isResting: false, // End rest if it was active
+        restDays: 0,
+        stageResult: action.stageResult,
+      };
+
+    case "HIDE_STAGE_EVALUATION":
+      return {
+        ...state,
+        isShowingConsequence: false,
+        currentConsequence: null,
+        stageResult: null,
+      };
+
     default:
       return state;
   }
@@ -223,7 +371,7 @@ function gameReducer(
 interface GameContextType {
   state: ExtendedGameState;
   dispatch: React.Dispatch<GameAction>;
-  startGame: () => void;
+  startGame: (mode?: GameMode) => void;
   selectOption: (optionKey: string) => void;
   nextEvent: () => void;
   resetGame: () => void;
@@ -233,6 +381,8 @@ interface GameContextType {
   checkMoneyRequired: (stats: PlayerStats, requiredAmount?: number) => boolean;
   getAvailableOptions: (event: ExtendedEvent) => Record<string, unknown>;
   toggleDeveloperMode: () => void;
+  showStageEvaluation: (stageResult: StageResult) => void;
+  hideStageEvaluation: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -241,8 +391,8 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
-  const startGame = () => {
-    dispatch({ type: "START_GAME" });
+  const startGame = (mode?: GameMode) => {
+    dispatch({ type: "START_GAME", mode });
   };
 
   const selectOption = (optionKey: string) => {
@@ -284,6 +434,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "TOGGLE_DEVELOPER_MODE" });
   };
 
+  const showStageEvaluation = (stageResult: StageResult) => {
+    dispatch({ type: "SHOW_STAGE_EVALUATION", stageResult });
+  };
+
+  const hideStageEvaluation = () => {
+    dispatch({ type: "HIDE_STAGE_EVALUATION" });
+  };
+
   const value: GameContextType = {
     state,
     dispatch,
@@ -297,6 +455,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     checkMoneyRequired,
     getAvailableOptions,
     toggleDeveloperMode,
+    showStageEvaluation,
+    hideStageEvaluation,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
