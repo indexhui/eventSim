@@ -7,6 +7,7 @@ import {
   getPersonalityAdjustedOptions,
   addPersonalitySpecificOptions,
 } from "../../../data/events/personality-options";
+import { getAnimalById, calculateAnimalAffinity, canCollectAnimal } from "../../../data/animals";
 
 interface EventDisplayProps {
   event: ExtendedEvent;
@@ -20,6 +21,7 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
     isShowingConsequence,
     currentConsequence,
     isDeveloperMode,
+    animalCollection,
   } = state;
 
   // 獲取個性調整後的選項
@@ -113,6 +115,109 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
               </Badge>
             ))}
           </HStack>
+        )}
+
+        {/* 開發者模式：動物遭遇資訊 */}
+        {isDeveloperMode && event.animalEncounter && (
+          <Box
+            bg="purple.50"
+            p={3}
+            borderRadius="md"
+            border="1px solid"
+            borderColor="purple.200"
+          >
+            <Text fontSize="sm" fontWeight="bold" color="purple.800" mb={2}>
+              🦊 動物遭遇資訊
+            </Text>
+            {(() => {
+              const animal = getAnimalById(event.animalEncounter.animalId);
+              if (!animal) return null;
+
+              const isCollected = animalCollection.collectedAnimals.some(a => a.id === animal.id);
+              const encounterCount = animalCollection.animalEncounters[animal.id] || 0;
+              const canCollect = canCollectAnimal(animal, playerStats);
+              const affinity = calculateAnimalAffinity(animal, playerStats);
+
+              return (
+                <VStack align="start" gap={2}>
+                  <HStack gap={2}>
+                    <Text fontSize="lg">{animal.icon}</Text>
+                    <Text fontSize="sm" fontWeight="semibold">{animal.name}</Text>
+                    <Badge colorScheme={
+                      animal.rarity === 'common' ? 'gray' :
+                      animal.rarity === 'uncommon' ? 'green' :
+                      animal.rarity === 'rare' ? 'blue' : 'purple'
+                    } size="sm">
+                      {animal.rarity === 'common' ? '常見' :
+                       animal.rarity === 'uncommon' ? '不常見' :
+                       animal.rarity === 'rare' ? '稀有' : '傳說'}
+                    </Badge>
+                  </HStack>
+                  <Text fontSize="xs" color="gray.600">{animal.description}</Text>
+                  
+                  <HStack gap={4} flexWrap="wrap">
+                    <Badge colorScheme={isCollected ? "green" : "gray"} variant="outline" fontSize="xs">
+                      {isCollected ? "✓ 已收集" : "未收集"}
+                    </Badge>
+                    <Badge colorScheme="blue" variant="outline" fontSize="xs">
+                      遭遇次數: {encounterCount}
+                    </Badge>
+                    <Badge colorScheme={canCollect ? "green" : "red"} variant="outline" fontSize="xs">
+                      {canCollect ? "✓ 可收集" : "✗ 條件未滿足"}
+                    </Badge>
+                    <Badge 
+                      colorScheme={affinity >= 70 ? "green" : affinity >= 50 ? "yellow" : "red"} 
+                      variant="outline" 
+                      fontSize="xs"
+                    >
+                      親和度: {affinity}%
+                    </Badge>
+                  </HStack>
+
+                  <HStack gap={2} flexWrap="wrap">
+                    <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+                      遭遇類型: {
+                        event.animalEncounter.encounterType === 'sighting' ? '目擊' :
+                        event.animalEncounter.encounterType === 'interaction' ? '互動' :
+                        event.animalEncounter.encounterType === 'rescue' ? '救援' : '威脅'
+                      }
+                    </Badge>
+                    {event.animalEncounter.collectionChance && (
+                      <Badge colorScheme="orange" variant="subtle" fontSize="xs">
+                        收集機率: {event.animalEncounter.collectionChance}%
+                      </Badge>
+                    )}
+                  </HStack>
+
+                  {animal.personalityAffinity && animal.personalityAffinity.length > 0 && (
+                    <Box>
+                      <Text fontSize="xs" fontWeight="bold" color="purple.700" mb={1}>
+                        性格親和度要求:
+                      </Text>
+                      <HStack gap={1} flexWrap="wrap">
+                        {animal.personalityAffinity.map((affinity, index) => {
+                          const currentValue = playerStats[affinity.trait as keyof typeof playerStats];
+                          const distance = Math.abs(currentValue - affinity.idealValue);
+                          const isWithinTolerance = distance <= affinity.tolerance;
+                          
+                          return (
+                            <Badge 
+                              key={index}
+                              colorScheme={isWithinTolerance ? "green" : "red"} 
+                              variant="outline" 
+                              fontSize="xs"
+                            >
+                              {affinity.trait}: {affinity.idealValue}±{affinity.tolerance} (當前: {currentValue})
+                            </Badge>
+                          );
+                        })}
+                      </HStack>
+                    </Box>
+                  )}
+                </VStack>
+              );
+            })()}
+          </Box>
         )}
 
         {/* 選項 */}
@@ -285,6 +390,33 @@ export function EventDisplay({ event, onSelectOption }: EventDisplayProps) {
                             )
                           )}
                         </HStack>
+                        
+                        {/* 動物相關功能 */}
+                        {(option.animalCollection || option.preventAnimalLeave) && (
+                          <Box mt={2}>
+                            <Text
+                              fontSize="xs"
+                              fontWeight="bold"
+                              color="purple.700"
+                              mb={1}
+                            >
+                              動物功能：
+                            </Text>
+                            <HStack gap={2} flexWrap="wrap">
+                              {option.animalCollection && (
+                                <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                                  🦊 可能收集動物
+                                </Badge>
+                              )}
+                              {option.preventAnimalLeave && (
+                                <Badge colorScheme="blue" variant="subtle" fontSize="xs">
+                                  🛡️ 阻止動物離開
+                                </Badge>
+                              )}
+                            </HStack>
+                          </Box>
+                        )}
+
                         {option.conditions && option.conditions.length > 0 && (
                           <Box mt={2}>
                             <Text

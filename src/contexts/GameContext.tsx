@@ -9,11 +9,18 @@ import {
   personalityLabels,
   STAT_LIMITS,
   ExtendedEvent,
+  AnimalCollectionState,
+  Animal,
 } from "../types/game";
 import {
-  getRandomEvent,
+  getRandomEventWithAnimalCheck,
   getAvailableOptions as getAvailableOptionsFromManager,
 } from "../data/events/event-manager";
+import {
+  getAnimalById,
+  canCollectAnimal,
+  calculateAnimalAffinity,
+} from "../data/animals";
 
 // 遊戲動作類型
 type GameAction =
@@ -26,7 +33,12 @@ type GameAction =
   | { type: "END_REST" }
   | { type: "SHOW_CONSEQUENCE"; consequence: string }
   | { type: "HIDE_CONSEQUENCE" }
-  | { type: "TOGGLE_DEVELOPER_MODE" };
+  | { type: "TOGGLE_DEVELOPER_MODE" }
+  | { type: "ENCOUNTER_ANIMAL"; animalId: string }
+  | { type: "COLLECT_ANIMAL"; animal: Animal }
+  | { type: "SET_ANIMAL_RISK"; animalId: string; reason: string; eventId: string }
+  | { type: "CLEAR_ANIMAL_RISK" }
+  | { type: "LOSE_ANIMAL"; animalId: string };
 
 // 擴展的遊戲狀態
 interface ExtendedGameState extends GameState {
@@ -36,6 +48,13 @@ interface ExtendedGameState extends GameState {
   isShowingConsequence: boolean;
   isDeveloperMode: boolean;
 }
+
+// 初始動物收集狀態
+const initialAnimalCollection: AnimalCollectionState = {
+  collectedAnimals: [],
+  animalEncounters: {},
+  pendingAnimalRisk: undefined,
+};
 
 // 初始遊戲狀態
 const initialState: ExtendedGameState = {
@@ -50,6 +69,7 @@ const initialState: ExtendedGameState = {
   currentConsequence: null,
   isShowingConsequence: false,
   isDeveloperMode: false,
+  animalCollection: initialAnimalCollection,
 };
 
 // 檢查是否需要休息
@@ -75,7 +95,7 @@ function gameReducer(
       return {
         ...state,
         isGameStarted: true,
-        currentEvent: getRandomEvent(state.playerStats, 0),
+        currentEvent: getRandomEventWithAnimalCheck(state.playerStats, 0, state.animalCollection),
         gameProgress: 0,
         isResting: false,
         restDays: 0,
@@ -131,7 +151,7 @@ function gameReducer(
         statChanges: selectedOption.statChanges,
       };
 
-      const updatedState = {
+      let updatedState = {
         ...state,
         playerStats: newStats,
         eventHistory: [...state.eventHistory, eventResult],
@@ -139,6 +159,77 @@ function gameReducer(
         currentConsequence: selectedOption.consequences?.[0] || null,
         isShowingConsequence: true,
       };
+
+      // 處理動物相關邏輯
+      if (currentEvent.animalEncounter) {
+        const { animalId, encounterType, collectionChance = 50 } = currentEvent.animalEncounter;
+        const animal = getAnimalById(animalId);
+        
+        if (animal) {
+          // 增加遭遇次數
+          const currentCount = updatedState.animalCollection.animalEncounters[animalId] || 0;
+          updatedState = {
+            ...updatedState,
+            animalCollection: {
+              ...updatedState.animalCollection,
+              animalEncounters: {
+                ...updatedState.animalCollection.animalEncounters,
+                [animalId]: currentCount + 1,
+              },
+            },
+          };
+
+          // 處理動物收集
+          if (selectedOption.animalCollection && encounterType !== 'threat') {
+            const canCollect = canCollectAnimal(animal, newStats);
+            const affinity = calculateAnimalAffinity(animal, newStats);
+            const randomChance = Math.random() * 100;
+            
+            // 收集成功的機率受親和度影響
+            const finalChance = (collectionChance * affinity) / 100;
+            
+            if (canCollect && randomChance <= finalChance) {
+              // 收集動物
+              updatedState = {
+                ...updatedState,
+                animalCollection: {
+                  ...updatedState.animalCollection,
+                  collectedAnimals: [
+                    ...updatedState.animalCollection.collectedAnimals,
+                    { ...animal, dateCollected: Date.now() },
+                  ],
+                },
+              };
+            }
+          }
+
+          // 處理動物離開威脅
+          if (encounterType === 'threat' && state.animalCollection.pendingAnimalRisk) {
+            if (selectedOption.preventAnimalLeave) {
+              // 成功阻止動物離開
+              updatedState = {
+                ...updatedState,
+                animalCollection: {
+                  ...updatedState.animalCollection,
+                  pendingAnimalRisk: undefined,
+                },
+              };
+            } else {
+              // 動物離開
+              updatedState = {
+                ...updatedState,
+                animalCollection: {
+                  ...updatedState.animalCollection,
+                  collectedAnimals: updatedState.animalCollection.collectedAnimals.filter(
+                    a => a.id !== state.animalCollection.pendingAnimalRisk.animalId
+                  ),
+                  pendingAnimalRisk: undefined,
+                },
+              };
+            }
+          }
+        }
+      }
 
       // 檢查是否需要休息
       if (checkRestRequired(newStats)) {
@@ -153,7 +244,7 @@ function gameReducer(
     }
 
     case "NEXT_EVENT": {
-      const nextEvent = getRandomEvent(state.playerStats, state.gameProgress);
+      const nextEvent = getRandomEventWithAnimalCheck(state.playerStats, state.gameProgress, state.animalCollection);
 
       return {
         ...state,
@@ -200,6 +291,7 @@ function gameReducer(
       return {
         ...initialState,
         personalityLabels: state.personalityLabels,
+        animalCollection: initialAnimalCollection,
       };
 
     case "UPDATE_STATS":
@@ -213,6 +305,78 @@ function gameReducer(
         ...state,
         isDeveloperMode: !state.isDeveloperMode,
       };
+
+    case "ENCOUNTER_ANIMAL": {
+      const { animalId } = action;
+      const currentCount = state.animalCollection.animalEncounters[animalId] || 0;
+      
+      return {
+        ...state,
+        animalCollection: {
+          ...state.animalCollection,
+          animalEncounters: {
+            ...state.animalCollection.animalEncounters,
+            [animalId]: currentCount + 1,
+          },
+        },
+      };
+    }
+
+    case "COLLECT_ANIMAL": {
+      const { animal } = action;
+      
+      // 檢查是否已經收集過
+      if (state.animalCollection.collectedAnimals.some(a => a.id === animal.id)) {
+        return state;
+      }
+      
+      return {
+        ...state,
+        animalCollection: {
+          ...state.animalCollection,
+          collectedAnimals: [
+            ...state.animalCollection.collectedAnimals,
+            { ...animal, dateCollected: Date.now() },
+          ],
+        },
+      };
+    }
+
+    case "SET_ANIMAL_RISK": {
+      const { animalId, reason, eventId } = action;
+      
+      return {
+        ...state,
+        animalCollection: {
+          ...state.animalCollection,
+          pendingAnimalRisk: { animalId, reason, eventId },
+        },
+      };
+    }
+
+    case "CLEAR_ANIMAL_RISK":
+      return {
+        ...state,
+        animalCollection: {
+          ...state.animalCollection,
+          pendingAnimalRisk: undefined,
+        },
+      };
+
+    case "LOSE_ANIMAL": {
+      const { animalId } = action;
+      
+      return {
+        ...state,
+        animalCollection: {
+          ...state.animalCollection,
+          collectedAnimals: state.animalCollection.collectedAnimals.filter(
+            a => a.id !== animalId
+          ),
+          pendingAnimalRisk: undefined,
+        },
+      };
+    }
 
     default:
       return state;

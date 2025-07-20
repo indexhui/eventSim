@@ -16,6 +16,7 @@ import { EventDisplay } from "./EventDisplay";
 import { SceneDisplay } from "./SceneDisplay";
 import { RestScreen } from "./RestScreen";
 import { EventListPage } from "./EventListPage";
+import AnimalCollection from "./AnimalCollection";
 import { useState } from "react";
 
 // 頁面類型
@@ -90,11 +91,14 @@ function GameHeader({
 
 export function GameScreen() {
   const { state, startGame, selectOption, resetGame } = useGame();
-  const { playerStats, currentEvent, isGameStarted, gameProgress, isResting } =
+  const { playerStats, currentEvent, isGameStarted, gameProgress, isResting, animalCollection } =
     state;
 
   // 頁面狀態管理
   const [currentPage, setCurrentPage] = useState<PageType>("game");
+  
+  // 動物收集面板狀態
+  const [isAnimalCollectionExpanded, setIsAnimalCollectionExpanded] = useState(false);
 
   // 導航到事件列表
   const navigateToEventList = () => {
@@ -235,6 +239,13 @@ export function GameScreen() {
           </HStack>
         </VStack>
       </Container>
+      
+      {/* 動物收集系統 */}
+      <AnimalCollection 
+        collection={animalCollection}
+        onToggle={() => setIsAnimalCollectionExpanded(!isAnimalCollectionExpanded)}
+        isExpanded={isAnimalCollectionExpanded}
+      />
     </Box>
   );
 }

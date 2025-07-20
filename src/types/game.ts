@@ -55,6 +55,7 @@ export interface ExtendedEvent {
   category: string;
   difficulty: string;
   tags?: string[];
+  animalEncounter?: AnimalEncounter; // 動物遭遇
   options: {
     [key: string]: {
       text: string;
@@ -65,6 +66,8 @@ export interface ExtendedEvent {
         value: number;
       }>;
       consequences?: string[];
+      animalCollection?: boolean; // 此選項是否會收集動物
+      preventAnimalLeave?: boolean; // 此選項是否阻止動物離開
     };
   };
 }
@@ -75,6 +78,52 @@ export interface EventResult {
   selectedOption: string;
   timestamp: number;
   statChanges: Partial<PlayerStats>;
+}
+
+// 動物相關介面
+export interface Animal {
+  id: string;
+  name: string;
+  species: 'cat' | 'dog' | 'bird' | 'rabbit' | 'hamster' | 'squirrel' | 'duck' | 'hedgehog' | 'turtle' | 'fish' | 'butterfly' | 'mouse';
+  rarity: 'common' | 'uncommon' | 'rare' | 'legendary';
+  description: string;
+  icon: string; // emoji or icon representation
+  unlockCondition?: {
+    stat?: keyof PlayerStats;
+    value?: number;
+    operator?: "gte" | "lte" | "eq" | "gt" | "lt";
+    eventId?: string;
+    personalityRange?: { trait: keyof PlayerStats; min: number; max: number }[];
+  };
+  personalityAffinity?: { // 性格特質會影響動物的親近度
+    trait: keyof PlayerStats;
+    idealValue: number; // 理想的特質值
+    tolerance: number; // 容忍範圍
+  }[];
+  dateCollected?: number;
+}
+
+// 動物收集狀態
+export interface AnimalCollectionState {
+  collectedAnimals: Animal[];
+  animalEncounters: Record<string, number>; // 記錄遇見次數
+  pendingAnimalRisk?: { // 當前有離開風險的動物
+    animalId: string;
+    reason: string;
+    eventId: string;
+  };
+}
+
+// 擴展事件以支援動物遭遇
+export interface AnimalEncounter {
+  animalId: string;
+  encounterType: 'sighting' | 'interaction' | 'rescue' | 'threat'; // threat = 動物可能離開
+  collectionChance?: number; // 0-100 收集機率
+  leaveCondition?: { // 離開條件（用於威脅事件）
+    trait: keyof PlayerStats;
+    threshold: number;
+    operator: "gte" | "lte";
+  };
 }
 
 // 人格標籤介面
@@ -96,6 +145,7 @@ export interface GameState {
   restDays: number; // 休息天數
   currentConsequence: string | null; // 當前選擇的後果
   isShowingConsequence: boolean; // 是否正在顯示後果
+  animalCollection: AnimalCollectionState; // 動物收集狀態
 }
 
 // 初始玩家屬性
